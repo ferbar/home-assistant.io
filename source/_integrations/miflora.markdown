@@ -1,6 +1,6 @@
 ---
-title: "Mi Flora plant sensor"
-description: "Instructions on how to integrate MiFlora BLE plant sensor with Home Assistant."
+title: Mi Flora plant sensor
+description: Instructions on how to integrate MiFlora BLE plant sensor with Home Assistant.
 logo: miflora.png
 ha_category:
   - Environment
@@ -80,7 +80,7 @@ monitored_conditions:
     conductivity:
       description: Conductivity in the soil.
     battery:
-      description: Battery details.
+      description: Battery details. Cached and only updated once a day.
 name:
   description: The name displayed in the frontend.
   required: false
@@ -99,6 +99,11 @@ adapter:
   required: false
   default: hci0
   type: string
+go_unavailable_timeout:
+  description: "Timeout to report this device as unavailable. This option hides a bad link quality"
+  required: false
+  default: 7200
+  type: time_period
 {% endconfiguration %}
 
 <div class='note warning'>
@@ -119,10 +124,26 @@ sensor:
     name: Flower 1
     force_update: true    
     median: 3
+    go_unavailable_timeout: 43200
     monitored_conditions:
       - moisture
       - light
       - temperature
       - conductivity
       - battery
+```
+An automation example to report a battery failure:
+
+```yaml
+- id: flower1_moisture_unavailable_check
+  alias: Flower 1 sensors available
+  trigger:
+  - entity_id: sensor.flower1_moisture
+    for: 24:00:00
+    platform: state
+    to: unavailable
+  action:
+  - data_template:
+      message: "Flower 1 Moisture is {{states('sensor.kiwi_moisture') }}"
+    service: notify.notifier_telegram_someone
 ```
